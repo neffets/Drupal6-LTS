@@ -7,7 +7,7 @@ Drupal.tableHeaderDoScroll = function() {
 
 Drupal.behaviors.tableHeader = function (context) {
   // This breaks in anything less than IE 7. Prevent it from running.
-  if (jQuery.browser.msie && parseInt(jQuery.browser.version, 10) < 7) {
+  if (navigator.appVersion.match(/MSIE 6/)) {
     return;
   }
 
@@ -84,8 +84,8 @@ Drupal.behaviors.tableHeader = function (context) {
   //  multiple times.
   if (!$('body').hasClass('tableHeader-processed')) {
     $('body').addClass('tableHeader-processed');
-    $(window).scroll(Drupal.tableHeaderDoScroll);
-    $(document.documentElement).scroll(Drupal.tableHeaderDoScroll);
+    $(window).on('scroll', Drupal.tableHeaderDoScroll);
+    $(document.documentElement).on('scroll', Drupal.tableHeaderDoScroll);
   }
 
   // Track scrolling.
@@ -112,5 +112,5 @@ Drupal.behaviors.tableHeader = function (context) {
       time = null;
     }, 250);
   };
-  $(window).resize(resize);
+  $(window).on('resize', resize);
 };

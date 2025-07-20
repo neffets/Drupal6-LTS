@@ -1,7 +1,7 @@
 
 Drupal.behaviors.color = function (context) {
   // This behavior attaches by ID, so is only valid once on a page.
-  if ($('#color_scheme_form .color-form.color-processed').size()) {
+  if ($('#color_scheme_form .color-form.color-processed').length) {
     return;
   }
   var form = $('#color_scheme_form .color-form', context);

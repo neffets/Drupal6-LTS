@@ -16,7 +16,7 @@
  */
 Drupal.behaviors.ahah = function(context) {
   for (var base in Drupal.settings.ahah) {
-    if (!$('#'+ base + '.ahah-processed').size()) {
+    if (!$('#'+ base + '.ahah-processed').length) {
       var element_settings = Drupal.settings.ahah[base];
 
       $(element_settings.selector).each(function() {
@@ -101,7 +101,7 @@ Drupal.ahah = function(base, element_settings) {
   };
 
   // Bind the ajaxSubmit function to the element event.
-  $(element_settings.element).bind(element_settings.event, function() {
+  $(element_settings.element).on(element_settings.event, function() {
     $(element_settings.element).parents('form').ajaxSubmit(options);
     return false;
   });
@@ -109,7 +109,7 @@ Drupal.ahah = function(base, element_settings) {
   // can be triggered through keyboard input as well as e.g. a mousedown
   // action.
   if (element_settings.keypress) {
-    $(element_settings.element).keypress(function(event) {
+    $(element_settings.element).on('keypress', function(event) {
       // Detect enter key.
       if (event.keyCode == 13) {
         $(element_settings.element).trigger(element_settings.event);
@@ -124,7 +124,7 @@ Drupal.ahah = function(base, element_settings) {
  */
 Drupal.ahah.prototype.beforeSubmit = function (form_values, element, options) {
   // Disable the element that received the change.
-  $(this.element).addClass('progress-disabled').attr('disabled', true);
+  $(this.element).addClass('progress-disabled').prop('disabled', true);
 
   // Insert progressbar or throbber.
   if (this.progress.type == 'bar') {
@@ -190,7 +190,7 @@ Drupal.ahah.prototype.success = function (response, status) {
   if (this.progress.object) {
     this.progress.object.stopMonitoring();
   }
-  $(this.element).removeClass('progress-disabled').attr('disabled', false);
+  $(this.element).removeClass('progress-disabled').prop('disabled', false);
 
   // Add the new content to the page.
   Drupal.freezeHeight();
@@ -209,10 +209,10 @@ Drupal.ahah.prototype.success = function (response, status) {
   // Determine what effect use and what content will receive the effect, then
   // show the new content. For browser compatibility, Safari is excluded from
   // using effects on table rows.
-  if (($.browser.safari && $("tr.ahah-new-content", new_content).size() > 0)) {
+  if ((navigator.appVersion.match(/Safari /) && $("tr.ahah-new-content", new_content).length > 0)) {
     new_content.show();
   }
-  else if ($('.ahah-new-content', new_content).size() > 0) {
+  else if ($('.ahah-new-content', new_content).length > 0) {
     $('.ahah-new-content', new_content).hide();
     new_content.show();
     $(".ahah-new-content", new_content)[this.showEffect](this.showSpeed);
@@ -247,7 +247,7 @@ Drupal.ahah.prototype.error = function (response, uri) {
   // Undo hide.
   $(this.wrapper).show();
   // Re-enable the element.
-  $(this.element).removeClass('progess-disabled').attr('disabled', false);
+  $(this.element).removeClass('progess-disabled').prop('disabled', false);
 };
 
 /**

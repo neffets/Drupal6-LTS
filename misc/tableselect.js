@@ -5,7 +5,7 @@ Drupal.behaviors.tableSelect = function (context) {
 
 Drupal.tableSelect = function() {
   // Do not add a "Select all" checkbox if there are no rows with checkboxes in the table
-  if ($('td input:checkbox', this).size() == 0) {
+  if ($('td input:checkbox', this).length == 0) {
     return;
   }
 
@@ -20,7 +20,12 @@ Drupal.tableSelect = function() {
   };
 
   // Find all <th> with class select-all, and insert the check all checkbox.
-  $('th.select-all', table).prepend($('<input type="checkbox" class="form-checkbox" />').attr('title', strings.selectAll)).click(function(event) {
+  $('th.select-all', table)
+  .prepend(
+    $('<input type="checkbox" class="form-checkbox" />')
+    .attr('title', strings.selectAll)
+  )
+  .on('click', function(event) {
     if ($(event.target).is('input:checkbox')) {
       // Loop through all checkboxes and set their state to the select all checkbox' state.
       checkboxes.each(function() {
@@ -34,7 +39,7 @@ Drupal.tableSelect = function() {
   });
 
   // For each of the checkboxes within the table.
-  checkboxes = $('td input:checkbox', table).click(function(e) {
+  checkboxes = $('td input:checkbox', table).on('click', function(e) {
     // Either add or remove the selected class based on the state of the check all checkbox.
     $(this).parents('tr:first')[ this.checked ? 'addClass' : 'removeClass' ]('selected');
 

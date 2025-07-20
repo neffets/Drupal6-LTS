@@ -4,7 +4,7 @@
  */
 Drupal.behaviors.batch = function (context) {
   // This behavior attaches by ID, so is only valid once on a page.
-  if ($('#progress.batch-processed').size()) {
+  if ($('#progress.batch-processed').length) {
     return;
   }
   $('#progress', context).addClass('batch-processed').each(function () {

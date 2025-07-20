@@ -22,7 +22,7 @@ Drupal.behaviors.profileDrag = function(context) {
         }
       }
       // This category has become empty
-      if ($(this).next('tr').is(':not(.draggable)') || $(this).next('tr').size() == 0) {
+      if ($(this).next('tr').is(':not(.draggable)') || $(this).next('tr').length == 0) {
         $(this).removeClass('category-populated').addClass('category-empty');
       }
       // This category has become populated.

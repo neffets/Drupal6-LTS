@@ -4,7 +4,7 @@ Drupal.behaviors.openid = function (context) {
   var $openidElements = $("#edit-openid-identifier-wrapper, li.user-link");
 
   // This behavior attaches by ID, so is only valid once on a page.
-  if (!$("#edit-openid-identifier.openid-processed").size() && $("#edit-openid-identifier").val()) {
+  if (!$("#edit-openid-identifier.openid-processed").length && $("#edit-openid-identifier").val()) {
     $("#edit-openid-identifier").addClass('openid-processed');
     $loginElements.hide();
     // Use .css("display", "block") instead of .show() to be Konqueror friendly.

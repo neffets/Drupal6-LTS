@@ -11,7 +11,7 @@ Drupal.behaviors.autocomplete = function (context) {
     }
     var input = $('#' + this.id.substr(0, this.id.length - 13))
       .attr('autocomplete', 'OFF')[0];
-    $(input.form).submit(Drupal.autocompleteSubmit);
+    $(input.form).on('submit', Drupal.autocompleteSubmit);
     new Drupal.jsAC(input, acdb[uri]);
     $(this).addClass('autocomplete-processed');
   });
@@ -24,7 +24,7 @@ Drupal.behaviors.autocomplete = function (context) {
 Drupal.autocompleteSubmit = function () {
   return $('#autocomplete').each(function () {
     this.owner.hidePopup();
-  }).size() == 0;
+  }).length == 0;
 };
 
 /**
@@ -36,9 +36,9 @@ Drupal.jsAC = function (input, db) {
   this.db = db;
 
   $(this.input)
-    .keydown(function (event) { return ac.onkeydown(this, event); })
-    .keyup(function (event) { ac.onkeyup(this, event); })
-    .blur(function () { ac.hidePopup(); ac.db.cancel(); });
+    .on('keydown', function (event) { return ac.onkeydown(this, event); })
+    .on('keyup', function (event) { ac.onkeyup(this, event); })
+    .on('blur', function () { ac.hidePopup(); ac.db.cancel(); });
 
 };
 
@@ -114,7 +114,7 @@ Drupal.jsAC.prototype.selectDown = function () {
   }
   else {
     var lis = $('li', this.popup);
-    if (lis.size() > 0) {
+    if (lis.length > 0) {
       this.highlight(lis.get(0));
     }
   }
@@ -205,9 +205,9 @@ Drupal.jsAC.prototype.found = function (matches) {
     var li = document.createElement('li');
     $(li)
       .html('<div>'+ matches[key] +'</div>')
-      .mousedown(function () { ac.select(this); })
-      .mouseover(function () { ac.highlight(this); })
-      .mouseout(function () { ac.unhighlight(this); });
+      .on('mousedown', function () { ac.select(this); })
+      .on('mouseover', function () { ac.highlight(this); })
+      .on('mouseout', function () { ac.unhighlight(this); });
     li.autocompleteValue = key;
     $(ul).append(li);
   }

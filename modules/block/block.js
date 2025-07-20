@@ -82,7 +82,7 @@ Drupal.behaviors.blockDrag = function(context) {
         }
       }
       // This region has become empty
-      if ($(this).next('tr').is(':not(.draggable)') || $(this).next('tr').size() == 0) {
+      if ($(this).next('tr').is(':not(.draggable)') || $(this).next('tr').length == 0) {
         $(this).removeClass('region-populated').addClass('region-empty');
       }
       // This region has become populated.

@@ -10,7 +10,7 @@ Drupal.behaviors.cleanURLsSettingsCheck = function(context) {
   // This behavior attaches by ID, so is only valid once on a page.
   // Also skip if we are on an install page, as Drupal.cleanURLsInstallCheck will handle
   // the processing.
-  if ($("#clean-url.clean-url-processed, #clean-url.install").size()) {
+  if ($("#clean-url.clean-url-processed, #clean-url.install").length) {
     return;
   }
   var url = Drupal.settings.basePath +"admin/settings/clean-urls/check";
@@ -73,7 +73,7 @@ Drupal.behaviors.copyFieldValue = function (context) {
   for (var sourceId in Drupal.settings.copyFieldValue) {
     // Get the list of target fields.
     targetIds = Drupal.settings.copyFieldValue[sourceId];
-    if (!$('#'+ sourceId + '.copy-field-values-processed').size(), context) {
+    if (!$('#'+ sourceId + '.copy-field-values-processed').length, context) {
       // Add the behavior to update target fields on blur of the primary field.
       sourceField = $('#' + sourceId);
       sourceField.bind('blur', function() {

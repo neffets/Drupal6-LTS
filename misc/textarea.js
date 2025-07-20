@@ -10,7 +10,7 @@ Drupal.behaviors.textarea = function(context) {
     // When wrapping the text area, work around an IE margin bug.  See:
     // http://jaspan.com/ie-inherited-margin-bug-form-elements-and-haslayout
     $(this).wrap('<div class="resizable-textarea"><span></span></div>')
-      .parent().append($('<div class="grippie"></div>').mousedown(startDrag));
+      .parent().append($('<div class="grippie"></div>').on('mousedown', startDrag));
 
     var grippie = $('div.grippie', $(this).parent())[0];
     grippie.style.marginRight = (grippie.offsetWidth - $(this)[0].offsetWidth) +'px';
@@ -18,7 +18,7 @@ Drupal.behaviors.textarea = function(context) {
     function startDrag(e) {
       staticOffset = textarea.height() - e.pageY;
       textarea.css('opacity', 0.25);
-      $(document).mousemove(performDrag).mouseup(endDrag);
+      $(document).on('mousemove', performDrag).on('mouseup', endDrag);
       return false;
     }
 
@@ -28,7 +28,7 @@ Drupal.behaviors.textarea = function(context) {
     }
 
     function endDrag(e) {
-      $(document).unbind("mousemove", performDrag).unbind("mouseup", endDrag);
+      $(document).off("mousemove", performDrag).off("mouseup", endDrag);
       textarea.css('opacity', 1);
     }
   });
