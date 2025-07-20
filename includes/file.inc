@@ -201,6 +201,10 @@ SetHandler Drupal_Security_Do_Not_Remove_See_SA_2006_006
 <IfModule mod_php7.c>
   php_flag engine off
 </IfModule>
+# From PHP 8 there is no number in the module name.
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
 # PHP 4, Apache 1.
 <IfModule mod_php4.c>
   php_flag engine off
@@ -521,6 +525,10 @@ function file_unmunge_filename($filename) {
  * @return
  */
 function file_create_filename($basename, $directory) {
+  // Strip control characters (ASCII value < 32). Though these are allowed in
+  // some filesystems, not many applications handle them well.
+  $basename = preg_replace('/[\x00-\x1F]/u', '_', $basename);
+
   $dest = $directory .'/'. $basename;
 
   if (file_exists($dest)) {
@@ -613,7 +621,11 @@ function file_save_upload($source, $validators = array(), $dest = FALSE, $replac
   }
 
   // If a file was uploaded, process it.
-  if (isset($_FILES['files']) && $_FILES['files']['name'][$source] && is_uploaded_file($_FILES['files']['tmp_name'][$source])) {
+  if (
+    isset($_FILES['files'])
+    && $_FILES['files']['name'][$source]
+    && (is_uploaded_file($_FILES['files']['tmp_name'][$source]) || $_FILES['files']['error'][$source] > 0)
+  ) {
     // Check for file upload errors and return FALSE if a
     // lower level system error occurred.
     switch ($_FILES['files']['error'][$source]) {
@@ -987,6 +999,7 @@ function file_download() {
       file_transfer($filepath, $headers);
     }
     else {
+      watchdog('access denied', __FUNCTION__ . ": file_download for non existent \"" . $filepath . "\"", array(__FILE__, __LINE__), WATCHDOG_WARNING);
       return drupal_access_denied();
     }
   }

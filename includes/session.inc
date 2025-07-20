@@ -124,7 +124,7 @@ function sess_write($key, $value) {
  * Called when an anonymous user becomes authenticated or vice-versa.
  */
 function sess_regenerate() {
-  global $user;
+  global $user, $base_path, $cookie_domain;
   $old_session_id = session_id();
 
   // We code around http://bugs.php.net/bug.php?id=32802 by destroying
@@ -133,7 +133,7 @@ function sess_regenerate() {
   // regardless of the Drupal configuration.
   // TODO: remove this when we require at least PHP 4.4.0
   if (isset($_COOKIE[session_name()])) {
-    setcookie(session_name(), '', time() - 42000, '/');
+    setcookie(session_name(), '', time() - 42000, empty($base_path)? '/' : $base_path, $cookie_domain);
   }
 
   // On PHP7, sess_read($key) is being called with the new session key but not

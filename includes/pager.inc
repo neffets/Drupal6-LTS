@@ -113,6 +113,8 @@ function pager_get_querystring() {
  */
 function theme_pager($tags = array(), $limit = 10, $element = 0, $parameters = array(), $quantity = 9) {
   global $pager_page_array, $pager_total;
+  $output = '';
+  if (!isset($pager_total)) return $output;
 
   // Calculate various markers within this pager piece:
   // Middle is used to "center" pages around the current page.
@@ -146,7 +148,7 @@ function theme_pager($tags = array(), $limit = 10, $element = 0, $parameters = a
   $li_next = theme('pager_next', (isset($tags[3]) ? $tags[3] : t('next ›')), $limit, $element, 1, $parameters);
   $li_last = theme('pager_last', (isset($tags[4]) ? $tags[4] : t('last »')), $limit, $element, $parameters);
 
-  if ($pager_total[$element] > 1) {
+  if (isset($pager_total) && $pager_total[$element] > 1) {
     if ($li_first) {
       $items[] = array(
         'class' => 'pager-first',
@@ -310,6 +312,7 @@ function theme_pager_previous($text, $limit, $element = 0, $interval = 1, $param
 function theme_pager_next($text, $limit, $element = 0, $interval = 1, $parameters = array()) {
   global $pager_page_array, $pager_total;
   $output = '';
+  if (!isset($pager_total)) return $output;
 
   // If we are anywhere but the last page
   if ($pager_page_array[$element] < ($pager_total[$element] - 1)) {
@@ -346,6 +349,7 @@ function theme_pager_next($text, $limit, $element = 0, $interval = 1, $parameter
 function theme_pager_last($text, $limit, $element = 0, $parameters = array()) {
   global $pager_page_array, $pager_total;
   $output = '';
+  if (!isset($pager_total)) return $output;
 
   // If we are anywhere but the last page
   if ($pager_page_array[$element] < ($pager_total[$element] - 1)) {

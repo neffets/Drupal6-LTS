@@ -760,6 +760,8 @@ function comment_save($edit) {
           $edit['name'] = $user->name;
         }
 
+        $edit['format'] = $edit['format'] ?? FILTER_FORMAT_DEFAULT;
+
         db_query("INSERT INTO {comments} (nid, pid, uid, subject, comment, format, hostname, timestamp, status, thread, name, mail, homepage) VALUES (%d, %d, %d, '%s', '%s', %d, '%s', %d, %d, '%s', '%s', '%s', '%s')", $edit['nid'], $edit['pid'], $edit['uid'], $edit['subject'], $edit['comment'], $edit['format'], ip_address(), $edit['timestamp'], $edit['status'], $thread, $edit['name'], $edit['mail'], $edit['homepage']);
         $edit['cid'] = db_last_insert_id('comments', 'cid');
 
@@ -1487,12 +1489,12 @@ function comment_form_add_preview($form, &$form_state) {
  * Validate comment form submissions.
  */
 function comment_form_validate($form, &$form_state) {
-  global $user;
+  global $user, $base_path, $cookie_domain;
   if ($user->uid === 0) {
     foreach (array('name', 'homepage', 'mail') as $field) {
       // Set cookie for 365 days.
       if (isset($form_state['values'][$field])) {
-        setcookie('comment_info_'. $field, $form_state['values'][$field], time() + 31536000, '/');
+        setcookie('comment_info_'. $field, $form_state['values'][$field], time() + 31536000, empty($base_path)? '/' : $base_path, $cookie_domain);
       }
     }
   }

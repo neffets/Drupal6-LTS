@@ -437,6 +437,7 @@ function drupal_access_denied() {
   }
 
   $path = drupal_get_normal_path(variable_get('site_403', ''));
+  $return = '';
   if ($path && $path != $_GET['q']) {
     // Set the active item in case there are tabs to display or other
     // dependencies on the path.
@@ -698,7 +699,13 @@ function drupal_http_request($url, $headers = array(), $method = 'GET', $data = 
 function drupal_error_handler($errno, $message, $filename, $line, $context = NULL) {
   // If the @ error suppression operator was used, error_reporting will have
   // been temporarily set to 0.
-  if (error_reporting() == 0) {
+  // If the @ error suppression operator was used, error_reporting will have
+  // been temporarily set to 0.
+  if (PHP_MAJOR_VERSION <= 7 && error_reporting() == 0) {
+    return;
+  }
+  // In PHP 8, it is set to E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE when using @.
+  if (PHP_MAJOR_VERSION >= 8 && error_reporting() === E_ERROR | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR | E_PARSE) {
     return;
   }
 
@@ -2063,6 +2070,9 @@ function _drupal_build_css_path($matches, $base = NULL) {
   if (isset($base)) {
     $_base = $base;
   }
+  if (!isset($matches) || !isset($matches[1])) {
+    return '';
+  }
 
   // Prefix with base and remove '../' segments where possible.
   $path = $_base . ($matches[1] ?? '');
@@ -2693,35 +2703,18 @@ function drupal_json($var = NULL) {
 }
 
 /**
- * Wrapper around urlencode() which avoids Apache quirks.
+ * Encodes a Drupal path for use in a URL.
  *
- * Should be used when placing arbitrary data in an URL. Note that Drupal paths
- * are urlencoded() when passed through url() and do not require urlencoding()
- * of individual components.
+ * For aesthetic reasons slashes are not escaped.
  *
- * Notes:
- * - For esthetic reasons, we do not escape slashes. This also avoids a 'feature'
- *   in Apache where it 404s on any path containing '%2F'.
- * - mod_rewrite unescapes %-encoded ampersands, hashes, and slashes when clean
- *   URLs are used, which are interpreted as delimiters by PHP. These
- *   characters are double escaped so PHP will still see the encoded version.
- * - With clean URLs, Apache changes '//' to '/', so every second slash is
- *   double escaped.
- * - This function should only be used on paths, not on query string arguments,
- *   otherwise unwanted double encoding will occur.
+ * Note that url() takes care of calling this function, so a path passed to that
+ * function should not be encoded in advance.
  *
- * @param $text
- *   String to encode
+ * @param string path
+ *   The Drupal path to encode.
  */
 function drupal_urlencode($text) {
-  if (variable_get('clean_url', '0')) {
-    return str_replace(array('%2F', '%26', '%23', '//'),
-                       array('/', '%2526', '%2523', '/%252F'),
-                       rawurlencode($text));
-  }
-  else {
-    return str_replace('%2F', '/', rawurlencode($text));
-  }
+  return str_replace('%2F', '/', rawurlencode($text));
 }
 
 /**
@@ -3673,6 +3666,14 @@ function drupal_write_record($table, &$object, $update = array()) {
       if (in_array($field, $db_mysql8_reserved_keywords)) {
         $fields[$key] = '`' . $field . '`';
       }
+    }
+  }
+  ## mysql problem with node_revisions while missing body
+  if ($table === 'node_revisions') {
+    if (!in_array('body', $fields, true)) {
+      $fields[] = 'body';
+      $placeholders[] = db_type_placeholder("text");
+      $values[] = "";
     }
   }
 

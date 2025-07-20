@@ -1844,7 +1844,12 @@ function template_preprocess_page(&$variables) {
   // Load all region content assigned via blocks.
   foreach (array_keys($regions) as $region) {
     // Prevent left and right regions from rendering blocks when 'show_blocks' == FALSE.
-    if (!(!$variables['show_blocks'] && ($region == 'left' || $region == 'right'))) {
+    if (
+      !(
+        ($region == 'left' || $region == 'right')
+        && (isset($variables['show_blocks']) && !$variables['show_blocks'])
+      )
+    ) {
       $blocks = theme('blocks', $region);
     }
     else {
@@ -1889,7 +1894,7 @@ function template_preprocess_page(&$variables) {
   $variables['language']          = $GLOBALS['language'];
   $variables['language']->dir     = $GLOBALS['language']->direction ? 'rtl' : 'ltr';
   $variables['logo']              = theme_get_setting('logo');
-  $variables['messages']          = $variables['show_messages'] ? theme('status_messages') : '';
+  $variables['messages']          = (isset($variables['show_messages']) && $variables['show_messages']) ? theme('status_messages') : '';
   $variables['mission']           = isset($mission) ? $mission : '';
   $variables['primary_links']     = theme_get_setting('toggle_primary_links') ? menu_primary_links() : array();
   $variables['secondary_links']   = theme_get_setting('toggle_secondary_links') ? menu_secondary_links() : array();
@@ -1912,9 +1917,9 @@ function template_preprocess_page(&$variables) {
   // This allows advanced theming based on context (home page, node of certain type, etc.).
   $body_classes = array();
   // Add a class that tells us whether we're on the front page or not.
-  $body_classes[] = $variables['is_front'] ? 'front' : 'not-front';
+  $body_classes[] = (isset($variables['is_front']) && $variables['is_front']) ? 'front' : 'not-front';
   // Add a class that tells us whether the page is viewed by an authenticated user or not.
-  $body_classes[] = $variables['logged_in'] ? 'logged-in' : 'not-logged-in';
+  $body_classes[] = (isset($variables['logged_in']) && $variables['logged_in']) ? 'logged-in' : 'not-logged-in';
   // Add arg(0) to make it possible to theme the page depending on the current page
   // type (e.g. node, admin, user, etc.). To avoid illegal characters in the class,
   // we're removing everything disallowed. We are not using 'a-z' as that might leave

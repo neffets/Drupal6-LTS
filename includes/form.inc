@@ -476,7 +476,7 @@ function drupal_process_form($form_id, &$form, &$form_state) {
       // possibly ending execution. We make sure we do not react to the batch
       // that is already being processed (if a batch operation performs a
       // drupal_execute).
-      if ($batch =& batch_get() && !isset($batch['current_set'])) {
+      if ($batch = batch_get() && !isset($batch['current_set'])) {
         // The batch uses its own copies of $form and $form_state for
         // late execution of submit handers and post-batch redirection.
         $batch['form'] = $form;
@@ -1379,7 +1379,7 @@ function form_type_textfield_value($form, $edit = FALSE) {
   if ($edit !== FALSE) {
     // Equate $edit to the form value to ensure it's marked for
     // validation.
-    return str_replace(array("\r", "\n"), '', $edit);
+    return str_replace(array("\r", "\n"), '', $edit ?? '');
   }
 }
 
@@ -1439,7 +1439,7 @@ function _form_set_value(&$form_values, $form_item, $parents, $value) {
   // This makes PHP 7 have the same behavior as PHP 5 when the value is an
   // empty string, rather than an array. This is depended on surprisingly
   // often in Drupal 6 contrib.
-  if ($form_values === '') {
+  if (!isset($form_values) || !is_array($form_values)) {
     $form_values = array();
   }
 
@@ -1858,7 +1858,7 @@ function weight_value(&$form) {
  * using the options array as index.
  */
 function expand_radios($element) {
-  if (count($element['#options']) > 0) {
+  if (isset($element) && isset($element['#options']) && count($element['#options']) > 0) {
     foreach ($element['#options'] as $key => $choice) {
       if (!isset($element[$key])) {
         // Generate the parents as the autogenerator does, so we will have a

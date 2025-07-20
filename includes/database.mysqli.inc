@@ -40,7 +40,6 @@ function db_status_report($phase) {
 /**
  * Returns the version of the database server currently in use.
  *
- * @return Database server version
  */
 function db_version() {
   global $active_db;
@@ -88,6 +87,8 @@ function db_connect($url) {
     mysqli_query($connection, 'SET NAMES utf8');
   }
 
+  #mysqli_query($connection, 'SET SESSION sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION";');
+  mysqli_query($connection, 'SET SESSION sql_mode="STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION";');
   // MySQL 8 has ONLY_FULL_GROUP_BY mode enabled by default. There are too many queries in Drupal 6 that do not
   // list all columns in GROUP BY clause. So we need to turn off this mode after connecting.
   list ($version) = explode('-', mysqli_get_server_info($connection));
@@ -104,6 +105,14 @@ function db_connect($url) {
 function _db_query($query, $debug = 0) {
   global $active_db, $queries, $user;
 
+  if (empty($query)) {
+    try {
+        throw new Exception('FEHLER', 500);
+    } catch (Exception $e) {
+        error_log($e->getTraceAsString());
+        return FALSE;
+    }
+  }
   if (variable_get('dev_query', 0)) {
     list($usec, $sec) = explode(' ', microtime());
     $timer = (float)$usec + (float)$sec;
@@ -118,7 +127,12 @@ function _db_query($query, $debug = 0) {
     $query = '/* '. $name .' : '. $bt[2]['function'] .' */ '. $query;
   }
 
-  $result = mysqli_query($active_db, $query);
+  try {
+    $result = mysqli_query($active_db, $query);
+  } catch (Exception $e) {
+    error_log(print_r($e, true));
+    error_log('SQL: ' . $query);
+  }
 
   if (variable_get('dev_query', 0)) {
     $query = $bt[2]['function'] ."\n". $query;
@@ -139,6 +153,12 @@ function _db_query($query, $debug = 0) {
     // Indicate to drupal_error_handler that this is a database error.
     ${DB_ERROR} = TRUE;
     trigger_error(check_plain(mysqli_error($active_db) ."\nquery: ". $query), E_USER_WARNING);
+    try {
+        throw new Exception('FEHLER', 500);
+    } catch (Exception $e) {
+        error_log($e->getTraceAsString());
+        return FALSE;
+    }
     return FALSE;
   }
 }
@@ -192,7 +212,7 @@ function db_result($result) {
     // The mysqli_fetch_row function has an optional second parameter $row
     // but that can't be used for compatibility with Oracle, DB2, etc.
     $array = mysqli_fetch_row($result);
-    return $array[0];
+    if (is_array($array)) return $array[0];
   }
   return FALSE;
 }
@@ -332,12 +352,8 @@ function db_decode_blob($data) {
  * Prepare user input for use in a database query, preventing SQL injection attacks.
  */
 function db_escape_string($text) {
-  if (empty($text)) {
-    return $text;
-  }
-
   global $active_db;
-  return mysqli_real_escape_string($active_db, $text);
+  return mysqli_real_escape_string($active_db, $text ?? '');
 }
 
 /**

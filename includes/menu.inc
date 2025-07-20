@@ -576,7 +576,7 @@ function _menu_translate(&$router_item, $map, $to_arg = FALSE) {
   $link_map = explode('/', $router_item['path']);
   for ($i = 0; $i < $router_item['number_parts']; $i++) {
     if ($link_map[$i] == '%') {
-      $link_map[$i] = $path_map[$i];
+      $link_map[$i] = (string)($path_map[$i] ?? '');
     }
   }
   $router_item['href'] = implode('/', $link_map);
@@ -665,7 +665,7 @@ function _menu_link_translate(&$item) {
       _menu_check_access($item, $map);
     }
     // For performance, don't localize a link the user can't access.
-    if ($item['access']) {
+    if (isset($item['access']) && $item['access']) {
       _menu_item_localize($item, $map, TRUE);
     }
   }
@@ -1045,7 +1045,7 @@ function _menu_tree_check_access(&$tree) {
   foreach ($tree as $key => $v) {
     $item = &$tree[$key]['link'];
     _menu_link_translate($item);
-    if ($item['access']) {
+    if (isset($item['access']) && $item['access']) {
       if ($tree[$key]['below']) {
         _menu_tree_check_access($tree[$key]['below']);
       }

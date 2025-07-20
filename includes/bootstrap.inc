@@ -478,6 +478,8 @@ function conf_init() {
     ini_set('session.cookie_domain', $cookie_domain);
   }
   session_name('SESS'. md5($session_name));
+  $cookiepath = empty($base_path)? '/' : $base_path;
+  session_set_cookie_params(0, $cookiepath, $cookie_domain);
 }
 
 /**
@@ -532,7 +534,7 @@ function drupal_get_filename($type, $name, $filename = NULL) {
     // Fallback to searching the filesystem if the database connection is
     // not established or the requested file is not found.
     $config = conf_path();
-    $dir = (($type == 'theme_engine') ? 'themes/engines' : $type . 's');
+    $dir = (($type == 'theme_engine') ? 'themes/engines' : $type . "s");
     $file = (($type == 'theme_engine') ? "$name.engine" : "$name.$type");
 
     foreach (array("$config/$dir/$file", "$config/$dir/$name/$file", "$dir/$file", "$dir/$name/$file") as $file) {
@@ -849,7 +851,7 @@ function referer_uri() {
  *
  * @see drupal_validate_utf8().
  */
-function check_plain($text) {
+function check_plain($text = '') {
   static $php525;
 
   if (!isset($php525)) {
@@ -864,7 +866,7 @@ function check_plain($text) {
   // @todo remove this when support for either IE6 or PHP < 5.2.5 is dropped.
 
   if ($php525) {
-    return htmlspecialchars($text, ENT_QUOTES, 'UTF-8');
+    return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
   }
   return (preg_match('/^./us', $text) == 1) ? htmlspecialchars($text, ENT_QUOTES, 'UTF-8') : '';
 }
@@ -899,7 +901,7 @@ function check_plain($text) {
  *   TRUE if the text is valid UTF-8, FALSE if not.
  */
 function drupal_validate_utf8($text) {
-  if (strlen($text) == 0) {
+  if (strlen((string)$text) == 0) {
     return TRUE;
   }
   // For performance reasons this logic is duplicated in check_plain().
@@ -1138,6 +1140,19 @@ function _drupal_bootstrap($phase) {
 
     case DRUPAL_BOOTSTRAP_CONFIGURATION:
       drupal_unset_globals();
+
+      // When clean URLs are enabled, emulate ?q=foo/bar using REQUEST_URI. It is
+      // not possible to append the query string using mod_rewrite without the B
+      // flag (this was added in Apache 2.2.8), because mod_rewrite unescapes the
+      // path before passing it on to PHP. This is a problem when the path contains
+      // e.g. "&" or "%" that have special meanings in URLs and must be encoded.
+      $_GET['q'] = request_path();
+
+      // The D7 patch we're backporting does not sync $_REQUEST['q'], however some contrib modules use this
+      // instead of $_GET['q'] - eg: globalredirect, imagecache_customactions.
+      // This is added to maintain support.
+      $_REQUEST['q'] = $_GET['q'];
+
       // PHP's built-in phar:// stream wrapper is not sufficiently secure. Override
       // it with a more secure one, which requires PHP 5.3.3. For lower versions,
       // unregister the built-in one without replacing it. Sites needing phar
@@ -1232,6 +1247,9 @@ function _drupal_bootstrap($phase) {
       $cache_mode = variable_get('cache', CACHE_DISABLED);
       // Get the page from the cache.
       $cache = $cache_mode == CACHE_DISABLED ? '' : page_get_cache();
+      if (getenv('DRUSHFORCE') || (isset($_SERVER['argc']) && $_SERVER['argc'] > 5)) {
+        $cache = false;
+      }
       // If the skipping of the bootstrap hooks is not enforced, call hook_boot.
       if (!$cache || $cache_mode != CACHE_AGGRESSIVE) {
         // Load module handling.
@@ -1365,6 +1383,50 @@ function language_list($field = 'language', $reset = FALSE) {
 function language_default($property = NULL) {
   $language = variable_get('language_default', (object) array('language' => 'en', 'name' => 'English', 'native' => 'English', 'direction' => 0, 'enabled' => 1, 'plurals' => 0, 'formula' => '', 'domain' => '', 'prefix' => '', 'weight' => 0, 'javascript' => ''));
   return $property ? $language->$property : $language;
+}
+
+/**
+ * Returns the requested URL path of the page being viewed.
+ *
+ * Examples:
+ * - http://example.com/node/306 returns "node/306".
+ * - http://example.com/drupalfolder/node/306 returns "node/306" while
+ *   base_path() returns "/drupalfolder/".
+ * - http://example.com/path/alias (which is a path alias for node/306) returns
+ *   "path/alias" as opposed to the internal path.
+ *
+ * @return
+ *   The requested Drupal URL path.
+ *
+ * @see current_path()
+ */
+function request_path() {
+  static $path;
+
+  if (isset($path)) {
+    return $path;
+  }
+
+  if (isset($_GET['q'])) {
+    // This is a request with a ?q=foo/bar query string. $_GET['q'] is
+    // overwritten in drupal_path_initialize(), but request_path() is called
+    // very early in the bootstrap process, so the original value is saved in
+    // $path and returned in later calls.
+    $path = $_GET['q'];
+  }
+  elseif (isset($_SERVER['REQUEST_URI'])) {
+    // This is a request using a clean URL. Extract the path from REQUEST_URI.
+    $request_path = strtok($_SERVER['REQUEST_URI'], '?');
+    $base_path_len = strlen(rtrim(dirname($_SERVER['SCRIPT_NAME']), '\/'));
+    // Unescape and strip $base_path prefix, leaving q without a leading slash.
+    $path = substr(urldecode($request_path), $base_path_len + 1);
+  }
+  else {
+    // This is the front page.
+    $path = '';
+  }
+
+  return $path;
 }
 
 /**
